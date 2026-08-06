@@ -50,6 +50,18 @@ type PzApi = {
     mods: string[];
     workshop: string[];
   }) => Promise<{ ok: boolean; error?: string }>;
+  workshopCache: (
+    ids: string[]
+  ) => Promise<
+    Record<string, { id: string; title: string | null; error?: string; fetchedAt: number }>
+  >;
+  workshopResolve: (payload: {
+    ids: string[];
+    force?: boolean;
+  }) => Promise<
+    Record<string, { id: string; title: string | null; error?: string; fetchedAt: number }>
+  >;
+  openExternal: (url: string) => Promise<void>;
 };
 
 declare global {

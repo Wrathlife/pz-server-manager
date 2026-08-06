@@ -293,6 +293,34 @@ select {
   border-radius: 999px;
   padding: 4px 8px 4px 10px;
   font-size: 12px;
+  max-width: 100%;
+}
+
+.chip-tall {
+  border-radius: 12px;
+  padding: 6px 8px 6px 10px;
+  align-items: flex-start;
+}
+
+.chip-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  max-width: 280px;
+}
+
+.chip-title {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chip-id {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
 }
 
 .chip button {

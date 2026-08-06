@@ -34,7 +34,11 @@ const api = {
   restoreBackup: (zipPath: string) => ipcRenderer.invoke("backup:restore", zipPath),
   getMods: () => ipcRenderer.invoke("mods:get"),
   setMods: (payload: { mods: string[]; workshop: string[] }) =>
-    ipcRenderer.invoke("mods:set", payload)
+    ipcRenderer.invoke("mods:set", payload),
+  workshopCache: (ids: string[]) => ipcRenderer.invoke("workshop:cache", ids),
+  workshopResolve: (payload: { ids: string[]; force?: boolean }) =>
+    ipcRenderer.invoke("workshop:resolve", payload),
+  openExternal: (url: string) => ipcRenderer.invoke("shell:openExternal", url)
 };
 
 contextBridge.exposeInMainWorld("pz", api);

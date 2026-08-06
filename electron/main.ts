@@ -28,6 +28,7 @@ import {
 } from "./processManager";
 import { createBackup, listBackups, restoreBackup } from "./backup";
 import { readSandboxFile, writeSandboxFile, applySandboxUpdates } from "./sandbox";
+import { getCachedWorkshopTitles, resolveWorkshopTitles } from "./steamWorkshop";
 
 let mainWindow: BrowserWindow | null = null;
 let settingsCache = loadSettings();
@@ -236,3 +237,12 @@ ipcMain.handle(
     return { ok: true as const };
   }
 );
+
+ipcMain.handle("workshop:cache", (_e, ids: string[]) => getCachedWorkshopTitles(ids));
+ipcMain.handle(
+  "workshop:resolve",
+  (_e, payload: { ids: string[]; force?: boolean }) =>
+    resolveWorkshopTitles(payload.ids ?? [], { force: payload.force })
+);
+
+ipcMain.handle("shell:openExternal", (_e, url: string) => shell.openExternal(url));
