@@ -7,7 +7,7 @@ type WorkshopMeta = {
   fetchedAt: number;
 };
 
-function ChipEditor({
+function IdListEditor({
   label,
   items,
   onChange,
@@ -46,46 +46,70 @@ function ChipEditor({
     <section className="card" style={{ marginBottom: 14 }}>
       <h3>{label}</h3>
       {hint ? <p className="muted">{hint}</p> : null}
-      <div className="chips">
+
+      <ol className="mod-list">
         {items.map((id, i) => {
           const meta = titles?.[id];
           const title = meta?.title;
           return (
-            <span className="chip chip-tall" key={`${id}-${i}`} title={meta?.error || title || id}>
-              <span className="chip-body">
-                {title ? <span className="chip-title">{title}</span> : null}
-                <span className="chip-id">{id}</span>
-              </span>
-              {title ? (
+            <li className="mod-row" key={`${id}-${i}`} title={meta?.error || title || id}>
+              <span className="mod-num">{i + 1}</span>
+              <div className="mod-main">
+                {title ? <div className="mod-title">{title}</div> : null}
+                <div className={`mod-id ${title ? "" : "mod-id-solo"}`}>{id}</div>
+              </div>
+              <div className="mod-actions">
+                {titles ? (
+                  <button
+                    type="button"
+                    className="btn icon"
+                    title="Open on Steam Workshop"
+                    onClick={() =>
+                      void window.pz.openExternal(
+                        `https://steamcommunity.com/sharedfiles/filedetails/?id=${id}`
+                      )
+                    }
+                  >
+                    ↗
+                  </button>
+                ) : null}
                 <button
                   type="button"
-                  title="Open on Steam Workshop"
-                  onClick={() =>
-                    void window.pz.openExternal(
-                      `https://steamcommunity.com/sharedfiles/filedetails/?id=${id}`
-                    )
-                  }
+                  className="btn icon"
+                  title="Move up"
+                  disabled={i === 0}
+                  onClick={() => move(i, -1)}
                 >
-                  ↗
+                  ↑
                 </button>
-              ) : null}
-              <button type="button" title="Up" onClick={() => move(i, -1)}>
-                ↑
-              </button>
-              <button type="button" title="Down" onClick={() => move(i, 1)}>
-                ↓
-              </button>
-              <button
-                type="button"
-                title="Remove"
-                onClick={() => onChange(items.filter((_, idx) => idx !== i))}
-              >
-                ×
-              </button>
-            </span>
+                <button
+                  type="button"
+                  className="btn icon"
+                  title="Move down"
+                  disabled={i === items.length - 1}
+                  onClick={() => move(i, 1)}
+                >
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  className="btn icon danger"
+                  title="Remove"
+                  onClick={() => onChange(items.filter((_, idx) => idx !== i))}
+                >
+                  ×
+                </button>
+              </div>
+            </li>
           );
         })}
-      </div>
+        {!items.length ? (
+          <li className="muted" style={{ listStyle: "none", padding: "8px 0" }}>
+            No entries yet.
+          </li>
+        ) : null}
+      </ol>
+
       <div className="row">
         <input
           style={{ flex: 1 }}
@@ -173,13 +197,13 @@ export function ModsPage() {
       {err ? <p className="err">{err}</p> : null}
       {msg ? <p className="ok-text">{msg}</p> : null}
 
-      <ChipEditor
+      <IdListEditor
         label="Mods (mod IDs)"
         items={mods}
         onChange={setMods}
-        hint="From each mod’s info.txt Mod ID field."
+        hint="From each mod’s info.txt Mod ID field. Order matches load order."
       />
-      <ChipEditor
+      <IdListEditor
         label="WorkshopItems (Steam Workshop IDs)"
         items={workshop}
         onChange={(next) => {
@@ -187,7 +211,7 @@ export function ModsPage() {
           void loadTitles(next);
         }}
         titles={titles}
-        hint="Numeric IDs from the Steam Workshop URL. Titles resolve via Steam API."
+        hint="Numeric IDs from the Steam Workshop URL. Numbers show load order."
       />
 
       <div className="row">
