@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { applyIniUpdates, parseIni, serializeIni } from "../shared/ini";
+import {
+  applyIniUpdates,
+  joinIniList,
+  parseIni,
+  serializeIni,
+  splitIniList
+} from "../shared/ini";
 
 describe("ini round-trip", () => {
   it("preserves comments and updates values", () => {
@@ -20,5 +26,10 @@ Password=
     expect(out).toContain("Password=secret");
     expect(out).toContain("PublicName=Test");
     expect(out).toContain("DefaultPort=16261");
+  });
+
+  it("splits and joins mod lists preserving order", () => {
+    expect(splitIniList("A; B;C ;")).toEqual(["A", "B", "C"]);
+    expect(joinIniList(["A", " B ", "", "C"])).toBe("A;B;C");
   });
 });

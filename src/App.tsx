@@ -6,12 +6,14 @@ import { SandboxPage } from "./pages/SandboxPage";
 import { ModsPage } from "./pages/ModsPage";
 import { BackupsPage } from "./pages/BackupsPage";
 import { AppSettingsPage } from "./pages/AppSettingsPage";
+import { AccountsPage } from "./pages/AccountsPage";
 
 type Page =
   | "dashboard"
   | "ini"
   | "sandbox"
   | "mods"
+  | "accounts"
   | "backups"
   | "settings";
 
@@ -20,6 +22,7 @@ const NAV: { id: Page; label: string }[] = [
   { id: "ini", label: "Settings (INI)" },
   { id: "sandbox", label: "Sandbox" },
   { id: "mods", label: "Mods" },
+  { id: "accounts", label: "Accounts" },
   { id: "backups", label: "Backups" },
   { id: "settings", label: "App Settings" }
 ];
@@ -72,6 +75,7 @@ export function App() {
     const res = await window.pz.serverStop();
     setBusy(false);
     if (!res.ok) setMsg(res.error || "Stop failed");
+    else if (res.killed?.length) setMsg(`Stopped pid ${res.killed.join(", ")}`);
     await refreshStatus();
   }
 
@@ -130,7 +134,8 @@ export function App() {
         ) : null}
         {page === "ini" ? <IniSettings onRestart={() => void onRestart()} /> : null}
         {page === "sandbox" ? <SandboxPage /> : null}
-        {page === "mods" ? <ModsPage /> : null}
+        {page === "mods" ? <ModsPage onRestart={() => void onRestart()} /> : null}
+        {page === "accounts" ? <AccountsPage running={running} /> : null}
         {page === "backups" ? <BackupsPage /> : null}
         {page === "settings" && settings ? (
           <AppSettingsPage

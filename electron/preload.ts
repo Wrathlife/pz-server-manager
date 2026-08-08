@@ -27,6 +27,14 @@ const api = {
   serverStop: () => ipcRenderer.invoke("server:stop"),
   serverRestart: () => ipcRenderer.invoke("server:restart"),
   consoleTail: () => ipcRenderer.invoke("console:tail") as Promise<string>,
+  consoleSend: (line: string) =>
+    ipcRenderer.invoke("console:send", line) as Promise<{ ok: boolean; error?: string }>,
+  resetWorldSave: () =>
+    ipcRenderer.invoke("world:reset") as Promise<{
+      ok: boolean;
+      error?: string;
+      path?: string;
+    }>,
   joinInfo: () => ipcRenderer.invoke("join:info"),
   listBackups: () => ipcRenderer.invoke("backup:list"),
   createBackup: (opts: { includeWorld: boolean; includeLogs: boolean }) =>
@@ -38,7 +46,15 @@ const api = {
   workshopCache: (ids: string[]) => ipcRenderer.invoke("workshop:cache", ids),
   workshopResolve: (payload: { ids: string[]; force?: boolean }) =>
     ipcRenderer.invoke("workshop:resolve", payload),
-  openExternal: (url: string) => ipcRenderer.invoke("shell:openExternal", url)
+  openExternal: (url: string) => ipcRenderer.invoke("shell:openExternal", url),
+  listAccounts: () => ipcRenderer.invoke("accounts:list"),
+  resetAccountPassword: (payload: { username: string; newPassword?: string }) =>
+    ipcRenderer.invoke("accounts:resetPassword", payload),
+  wipeAccount: (username: string) => ipcRenderer.invoke("accounts:wipe", username),
+  wipeAllAccounts: (payload: { keepAdmin: boolean }) =>
+    ipcRenderer.invoke("accounts:wipeAll", payload),
+  clearAccountPasswords: (usernames: string[]) =>
+    ipcRenderer.invoke("accounts:clearPasswords", usernames)
 };
 
 contextBridge.exposeInMainWorld("pz", api);

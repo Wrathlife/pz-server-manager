@@ -13,11 +13,18 @@ export function Dashboard({ settings, status, onStatus }: Props) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [consoleText, setConsoleText] = useState("");
   const [filter, setFilter] = useState("");
+  const [command, setCommand] = useState("");
+  const [cmdHistory, setCmdHistory] = useState<string[]>([]);
+  const [histIdx, setHistIdx] = useState(-1);
   const [join, setJoin] = useState<JoinInfo | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [warn, setWarn] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const cmdRef = useRef<HTMLInputElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
+
+  const running = !!status?.running;
+  const canSendCommands = running && !!status?.pid;
 
   async function loadIni() {
     const res = await window.pz.readIni();
@@ -72,6 +79,71 @@ export function Dashboard({ settings, status, onStatus }: Props) {
 
   function setVal(key: string, v: string) {
     setValues((prev) => ({ ...prev, [key]: v }));
+  }
+
+  async function sendCommand() {
+    const line = command.trim();
+    if (!line) return;
+    setNotice(null);
+    const res = await window.pz.consoleSend(line);
+    if (!res.ok) {
+      setNotice(res.error || "Failed to send command");
+      return;
+    }
+    setCmdHistory((h) => {
+      const next = [...h.filter((x) => x !== line), line].slice(-40);
+      return next;
+    });
+    setHistIdx(-1);
+    setCommand("");
+    setNotice(`Sent: ${line}`);
+    setTimeout(() => void window.pz.consoleTail().then(setConsoleText), 400);
+  }
+
+  function onCmdKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      void sendCommand();
+      return;
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (!cmdHistory.length) return;
+      const next = histIdx < 0 ? cmdHistory.length - 1 : Math.max(0, histIdx - 1);
+      setHistIdx(next);
+      setCommand(cmdHistory[next] ?? "");
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (histIdx < 0) return;
+      const next = histIdx + 1;
+      if (next >= cmdHistory.length) {
+        setHistIdx(-1);
+        setCommand("");
+      } else {
+        setHistIdx(next);
+        setCommand(cmdHistory[next] ?? "");
+      }
+    }
+  }
+
+  async function onResetWorld() {
+    setNotice(null);
+    if (running) {
+      setNotice("Stop the server before resetting the world save.");
+      return;
+    }
+    const res = await window.pz.resetWorldSave();
+    if (!res.ok) {
+      if (res.error !== "Cancelled") setNotice(res.error || "Reset failed");
+      return;
+    }
+    setNotice(
+      res.path
+        ? `World save deleted: ${res.path}. Start the server to generate a fresh map.`
+        : "World save reset."
+    );
   }
 
   const filtered = filter
@@ -207,11 +279,65 @@ export function Dashboard({ settings, status, onStatus }: Props) {
           <button className="btn" onClick={() => setConsoleText("")}>
             Clear view
           </button>
+          <button
+            className="btn danger"
+            disabled={running}
+            title={
+              running
+                ? "Stop the server first"
+                : "Delete Multiplayer world save (keeps INI / Sandbox)"
+            }
+            onClick={() => void onResetWorld()}
+          >
+            Reset world save…
+          </button>
         </div>
-        <div className="console">
+        <div
+          className="console"
+          onClick={() => cmdRef.current?.focus()}
+          role="log"
+          aria-label="Server console output"
+        >
           {filtered || <span className="muted">No console output yet.</span>}
           <div ref={bottomRef} />
         </div>
+        <div className="console-cmd-row">
+          <span className="console-prompt" aria-hidden>
+            ›
+          </span>
+          <input
+            ref={cmdRef}
+            className="console-cmd"
+            placeholder={
+              canSendCommands
+                ? "Type a server command (help, players, setaccesslevel …) and press Enter"
+                : running
+                  ? "Server running outside this app — Stop + Start here to enable commands"
+                  : "Start the server to send console commands"
+            }
+            value={command}
+            disabled={!canSendCommands}
+            onChange={(e) => {
+              setCommand(e.target.value);
+              setHistIdx(-1);
+            }}
+            onKeyDown={onCmdKeyDown}
+            spellCheck={false}
+            autoComplete="off"
+          />
+          <button
+            className="btn primary"
+            disabled={!canSendCommands || !command.trim()}
+            onClick={() => void sendCommand()}
+          >
+            Send
+          </button>
+        </div>
+        <p className="muted" style={{ marginTop: 8, marginBottom: 0 }}>
+          Commands go to the process started by this app. Examples:{" "}
+          <code>help</code>, <code>players</code>,{" "}
+          <code>setaccesslevel &quot;Name&quot; admin</code>, <code>save</code>, <code>quit</code>.
+        </p>
       </section>
     </div>
   );

@@ -2,17 +2,27 @@
 
 Desktop GUI for configuring and running a **Project Zomboid Dedicated Server** on Windows — without hand-editing INI files all day.
 
+**Repo:** [github.com/Wrathlife/pz-server-manager](https://github.com/Wrathlife/pz-server-manager)
+
+Companion client sandbox pipeline (SteamCMD / decompile / map): [pz-sandbox-refresh](https://github.com/Wrathlife/pz-sandbox-refresh).
+
 ## Features
 
 - Editable paths (install dir, start script, Zomboid user data, server profile name, backups)
 - Steam path detection
 - Start / Stop / Restart
-- Live console tail (`server-console.txt`)
+- Live console tail (`server-console.txt`) with command input (stdin) and world-save reset
 - Dashboard quick settings + join info (loopback / LAN / public IP)
 - Full `servertest.ini` editor (grouped + search, preserves comments)
-- SandboxVars editor (structured + raw)
-- Mods / WorkshopItems chip editor
+- SandboxVars editor with Vanilla + Mod sections (nested tables like Hot Brass / Guns of Marz) + raw Lua
+- Mods / WorkshopItems list with Steam Workshop title resolve
+- Accounts: list whitelist users, reset/clear passwords, wipe one or all (with confirm)
 - Config (+ optional world/logs) zip backup & restore
+
+## Docs
+
+- [Architecture](docs/ARCHITECTURE.md) — Electron layout, paths, process control
+- [Accounts](docs/ACCOUNTS.md) — whitelist DB location and wipe/password behavior
 
 ## Defaults
 
@@ -22,6 +32,7 @@ Desktop GUI for configuring and running a **Project Zomboid Dedicated Server** o
 | Start script | `{install}\StartServer64.bat` |
 | Zomboid data | `%USERPROFILE%\Zomboid` |
 | Profile | `servertest` → `%USERPROFILE%\Zomboid\Server\servertest.ini` |
+| Accounts DB | `%USERPROFILE%\Zomboid\db\{profile}.db` |
 | Backups | `%USERPROFILE%\Zomboid\backups\pz-server-manager\` |
 | App settings | `%APPDATA%\pz-server-manager\settings.json` |
 
@@ -47,6 +58,7 @@ npm run preview
 
 ```bash
 npm test
+npm run typecheck
 ```
 
 ## Notes
@@ -54,3 +66,8 @@ npm test
 - Stop may force-kill the process tree started by this app (`taskkill /T /F`).
 - Internet joins still need UDP **16261** and **16262** reachable (UPnP or port forward).
 - Workshop content is not auto-downloaded; IDs are only written into the server INI.
+- Mod sandbox options appear under **Sandbox → Mods** only after they exist in `{profile}_SandboxVars.lua` (save once from the game’s Edit Settings → Sandbox, or join with the mods loaded). Sparse sections mean the server file only has a few keys so far.
+
+## License
+
+MIT — see [LICENSE](LICENSE).

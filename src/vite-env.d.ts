@@ -24,6 +24,19 @@ type PzApi = {
     path: string;
     exists: boolean;
     flat: Record<string, string>;
+    sections: {
+      id: string;
+      label: string;
+      isMod: boolean;
+      fields: {
+        path: string;
+        section: string;
+        key: string;
+        value: string;
+        label: string | null;
+        kind: "bool" | "number" | "string" | "other";
+      }[];
+    }[];
     raw: string;
   }>;
   writeSandbox: (payload: {
@@ -33,9 +46,11 @@ type PzApi = {
   }) => Promise<{ ok: true } | { ok: false; error: string }>;
   serverStatus: () => Promise<import("../shared/types").ServerStatus>;
   serverStart: () => Promise<{ ok: boolean; error?: string; pid?: number }>;
-  serverStop: () => Promise<{ ok: boolean; error?: string }>;
+  serverStop: () => Promise<{ ok: boolean; error?: string; killed?: number[] }>;
   serverRestart: () => Promise<{ ok: boolean; error?: string; pid?: number }>;
   consoleTail: () => Promise<string>;
+  consoleSend: (line: string) => Promise<{ ok: boolean; error?: string }>;
+  resetWorldSave: () => Promise<{ ok: boolean; error?: string; path?: string }>;
   joinInfo: () => Promise<import("../shared/types").JoinInfo>;
   listBackups: () => Promise<import("../shared/types").BackupEntry[]>;
   createBackup: (opts: {
@@ -45,11 +60,14 @@ type PzApi = {
   restoreBackup: (
     zipPath: string
   ) => Promise<{ ok: boolean; error?: string }>;
-  getMods: () => Promise<{ mods: string[]; workshop: string[] }>;
+  getMods: () => Promise<
+    | { ok: true; path: string; mods: string[]; workshop: string[] }
+    | { ok: false; error: string; path?: string }
+  >;
   setMods: (payload: {
     mods: string[];
     workshop: string[];
-  }) => Promise<{ ok: boolean; error?: string }>;
+  }) => Promise<{ ok: boolean; error?: string; path?: string }>;
   workshopCache: (
     ids: string[]
   ) => Promise<
@@ -62,6 +80,36 @@ type PzApi = {
     Record<string, { id: string; title: string | null; error?: string; fetchedAt: number }>
   >;
   openExternal: (url: string) => Promise<void>;
+  listAccounts: () => Promise<{
+    ok: boolean;
+    path: string;
+    exists: boolean;
+    accounts: {
+      id: number;
+      username: string;
+      role: string | null;
+      roleId?: number | null;
+      steamid: string | null;
+      lastConnection: string | null;
+      displayName: string | null;
+      hasPassword: boolean;
+      world: string | null;
+    }[];
+    error?: string;
+  }>;
+  resetAccountPassword: (payload: {
+    username: string;
+    newPassword?: string;
+  }) => Promise<{ ok: boolean; error?: string; method?: string; backup?: string }>;
+  wipeAccount: (
+    username: string
+  ) => Promise<{ ok: boolean; error?: string; method?: string; backup?: string }>;
+  wipeAllAccounts: (payload: {
+    keepAdmin: boolean;
+  }) => Promise<{ ok: boolean; error?: string; deleted?: number; backup?: string }>;
+  clearAccountPasswords: (
+    usernames: string[]
+  ) => Promise<{ ok: boolean; error?: string; cleared?: number; backup?: string }>;
 };
 
 declare global {

@@ -56,3 +56,15 @@ export function serializeIni(doc: IniDocument): string {
 export function getIniValue(doc: IniDocument, key: string, fallback = ""): string {
   return doc.values[key] ?? fallback;
 }
+
+/** Split semicolon-separated INI list values (Mods, WorkshopItems, …). */
+export function splitIniList(value: string): string[] {
+  return value
+    .split(";")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+export function joinIniList(items: string[]): string {
+  return items.map((s) => s.trim()).filter(Boolean).join(";");
+}

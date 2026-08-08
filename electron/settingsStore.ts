@@ -62,6 +62,7 @@ export function resolvedPaths(s: AppSettings) {
     spawnpoints: path.join(serverDir, `${name}_spawnpoints.lua`),
     spawnregions: path.join(serverDir, `${name}_spawnregions.lua`),
     worldDir: path.join(s.zomboidDir, "Saves", "Multiplayer", name),
+    accountsDb: path.join(s.zomboidDir, "db", `${name}.db`),
     consoleLog: path.join(s.zomboidDir, "server-console.txt"),
     logsDir: path.join(s.zomboidDir, "Logs")
   };
