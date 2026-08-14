@@ -2,10 +2,13 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import https from "node:https";
+import { parseModIdsFromDescription } from "../shared/modIdParse";
 
 export type WorkshopDetails = {
   id: string;
   title: string | null;
+  description?: string | null;
+  modIds?: string[];
   error?: string;
   fetchedAt: number;
 };
@@ -62,8 +65,26 @@ function postForm(url: string, body: string): Promise<string> {
 type SteamPublishedFile = {
   publishedfileid?: string;
   title?: string;
+  description?: string;
   result?: number;
 };
+
+function cacheFresh(
+  hit: WorkshopDetails | undefined,
+  now: number,
+  needDescription?: boolean
+): boolean {
+  if (!hit?.title) return false;
+  if (now - hit.fetchedAt >= CACHE_TTL_MS) return false;
+  if (
+    needDescription &&
+    hit.description === undefined &&
+    !(hit.modIds && hit.modIds.length)
+  ) {
+    return false;
+  }
+  return true;
+}
 
 /**
  * Resolve Workshop titles via Steam's public GetPublishedFileDetails API.
@@ -71,7 +92,7 @@ type SteamPublishedFile = {
  */
 export async function resolveWorkshopTitles(
   ids: string[],
-  opts?: { force?: boolean }
+  opts?: { force?: boolean; needDescription?: boolean }
 ): Promise<Record<string, WorkshopDetails>> {
   const unique = [
     ...new Set(ids.map((id) => id.trim()).filter((id) => /^\d+$/.test(id)))
@@ -83,12 +104,7 @@ export async function resolveWorkshopTitles(
 
   for (const id of unique) {
     const hit = cache[id];
-    if (
-      !opts?.force &&
-      hit &&
-      hit.title &&
-      now - hit.fetchedAt < CACHE_TTL_MS
-    ) {
+    if (hit && !opts?.force && cacheFresh(hit, now, opts?.needDescription)) {
       out[id] = hit;
     } else {
       missing.push(id);
@@ -115,10 +131,15 @@ export async function resolveWorkshopTitles(
 
       for (const id of chunk) {
         const d = byId.get(id);
+        const title = d?.title?.trim() || null;
+        const description = d?.description ?? null;
+        const modIds = description ? parseModIdsFromDescription(description) : [];
         const entry: WorkshopDetails = {
           id,
-          title: d?.title?.trim() || null,
-          error: d?.title ? undefined : "No title returned (private or removed?)",
+          title,
+          description,
+          modIds,
+          error: title ? undefined : "No title returned (private or removed?)",
           fetchedAt: now
         };
         cache[id] = entry;
@@ -127,9 +148,12 @@ export async function resolveWorkshopTitles(
     } catch (e) {
       const err = e instanceof Error ? e.message : String(e);
       for (const id of chunk) {
+        const prev = cache[id];
         const entry: WorkshopDetails = {
           id,
-          title: cache[id]?.title ?? null,
+          title: prev?.title ?? null,
+          description: prev?.description,
+          modIds: prev?.modIds,
           error: err,
           fetchedAt: now
         };
@@ -149,4 +173,8 @@ export function getCachedWorkshopTitles(ids: string[]): Record<string, WorkshopD
     if (cache[id]) out[id] = cache[id];
   }
   return out;
+}
+
+export function getAllCachedWorkshopDetails(): Record<string, WorkshopDetails> {
+  return loadCache();
 }

@@ -39,6 +39,11 @@ import { createBackup, listBackups, restoreBackup } from "./backup";
 import { readSandboxFile, writeSandboxFile, applySandboxUpdates } from "./sandbox";
 import { getCachedWorkshopTitles, resolveWorkshopTitles } from "./steamWorkshop";
 import {
+  listSubscribedWorkshopItems,
+  loadClientModPresets,
+  resolveWorkshopModIds
+} from "./workshopMods";
+import {
   listAccounts,
   resetAccountPassword,
   wipeAccount,
@@ -356,5 +361,24 @@ ipcMain.handle(
   (_e, payload: { ids: string[]; force?: boolean }) =>
     resolveWorkshopTitles(payload.ids ?? [], { force: payload.force })
 );
+ipcMain.handle("workshop:modIds", (_e, ids: string[]) => {
+  const r = resolvedPaths(getSettings());
+  return resolveWorkshopModIds(ids ?? [], {
+    clientWorkshopDir: r.clientWorkshopDir,
+    serverWorkshopDir: r.serverWorkshopDir
+  });
+});
+ipcMain.handle("workshop:subscribed", () => {
+  const r = resolvedPaths(getSettings());
+  return listSubscribedWorkshopItems(r.clientWorkshopDir);
+});
+ipcMain.handle("mods:presets", () => {
+  const r = resolvedPaths(getSettings());
+  return loadClientModPresets({
+    clientModlist: r.clientModlist,
+    clientWorkshopDir: r.clientWorkshopDir,
+    serverWorkshopDir: r.serverWorkshopDir
+  });
+});
 
 ipcMain.handle("shell:openExternal", (_e, url: string) => shell.openExternal(url));

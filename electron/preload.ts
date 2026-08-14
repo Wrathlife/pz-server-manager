@@ -46,6 +46,9 @@ const api = {
   workshopCache: (ids: string[]) => ipcRenderer.invoke("workshop:cache", ids),
   workshopResolve: (payload: { ids: string[]; force?: boolean }) =>
     ipcRenderer.invoke("workshop:resolve", payload),
+  workshopModIds: (ids: string[]) => ipcRenderer.invoke("workshop:modIds", ids),
+  workshopSubscribed: () => ipcRenderer.invoke("workshop:subscribed"),
+  listClientPresets: () => ipcRenderer.invoke("mods:presets"),
   openExternal: (url: string) => ipcRenderer.invoke("shell:openExternal", url),
   listAccounts: () => ipcRenderer.invoke("accounts:list"),
   resetAccountPassword: (payload: { username: string; newPassword?: string }) =>

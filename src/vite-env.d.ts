@@ -79,6 +79,21 @@ type PzApi = {
   }) => Promise<
     Record<string, { id: string; title: string | null; error?: string; fetchedAt: number }>
   >;
+  workshopModIds: (
+    ids: string[]
+  ) => Promise<import("../shared/types").WorkshopModMapping[]>;
+  workshopSubscribed: () => Promise<
+    | { ok: true; path: string; items: import("../shared/types").WorkshopModMapping[] }
+    | { ok: false; error: string; path: string }
+  >;
+  listClientPresets: () => Promise<
+    | {
+        ok: true;
+        path: string;
+        presets: import("../shared/types").ClientModPresetResolved[];
+      }
+    | { ok: false; error: string; path: string }
+  >;
   openExternal: (url: string) => Promise<void>;
   listAccounts: () => Promise<{
     ok: boolean;

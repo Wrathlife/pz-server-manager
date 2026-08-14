@@ -34,10 +34,9 @@ const MOD_SECTION_LABELS: Record<string, string> = {
   GWG: "Gunworks Gang Framework",
   HB: "Hot Brass",
   rSemiTruck: "W900 Semi-Truck / Military",
-  MSW: "Guns of Marz (Weapons)",
+  MSW: "Guns of Marz (Slots)",
   GoM: "Guns of Marz (Weapons)",
-  MarzGuns: "Guns of Marz (Weapons)",
-  SWMG: "Gunworks Framework"
+  MarzGuns: "Guns of Marz (Weapons)"
 };
 
 function detectKind(value: string): SandboxField["kind"] {
@@ -163,7 +162,18 @@ export function parseSandboxVars(text: string): {
     });
   }
 
-  // Stable order: general, vanilla nested, then mods alpha
+  const modLabelCount = new Map<string, number>();
+  for (const s of sections) {
+    if (!s.isMod) continue;
+    modLabelCount.set(s.label, (modLabelCount.get(s.label) ?? 0) + 1);
+  }
+  for (const s of sections) {
+    if (s.isMod && (modLabelCount.get(s.label) ?? 0) > 1) {
+      s.label = `${s.label} · ${s.id}`;
+    }
+  }
+
+  // Stable order: general, vanilla nested, then mods alpha (UI may re-order to INI)
   sections.sort((a, b) => {
     if (a.id === "") return -1;
     if (b.id === "") return 1;

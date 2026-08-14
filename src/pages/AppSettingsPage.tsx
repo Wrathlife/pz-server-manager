@@ -48,7 +48,7 @@ export function AppSettingsPage({ settings, onChange }: Props) {
   async function detect() {
     const next = await window.pz.detectPaths();
     setDraft(next);
-    setMsg("Detected Steam dedicated server paths (saved).");
+    setMsg("Detected Steam paths (saved).");
     await refreshChecks();
   }
 
@@ -79,7 +79,8 @@ export function AppSettingsPage({ settings, onChange }: Props) {
             ["installDir", "Dedicated server install", true],
             ["startScript", "Start script", false],
             ["zomboidDir", "Zomboid user data", true],
-            ["backupDir", "Backup folder", true]
+            ["backupDir", "Backup folder", true],
+            ["clientWorkshopDir", "Client Workshop folder", true]
           ] as const
         ).map(([key, label, isDir]) => (
           <div className="field" key={key}>
@@ -91,12 +92,20 @@ export function AppSettingsPage({ settings, onChange }: Props) {
                   ? mark(checks?.startScript)
                   : key === "zomboidDir"
                     ? mark(checks?.zomboidDir)
-                    : mark(checks?.backupDir)}
+                    : key === "clientWorkshopDir"
+                      ? mark(checks?.clientWorkshopDir)
+                      : mark(checks?.backupDir)}
             </label>
             <div className="row">
               <input
                 style={{ flex: 1 }}
                 value={String(draft[key])}
+                placeholder={
+                  key === "clientWorkshopDir"
+                    ? resolved?.clientWorkshopDir ||
+                      "C:\\Program Files (x86)\\Steam\\steamapps\\workshop\\content\\108600"
+                    : undefined
+                }
                 onChange={(e) => set(key, e.target.value as never)}
               />
               <button
@@ -106,6 +115,12 @@ export function AppSettingsPage({ settings, onChange }: Props) {
                 Browse
               </button>
             </div>
+            {key === "clientWorkshopDir" ? (
+              <p className="muted">
+                Client game Workshop downloads (`steamapps\workshop\content\108600`). Leave empty
+                to auto-detect on C:. Used by Import subscribed and Fill Mod IDs.
+              </p>
+            ) : null}
           </div>
         ))}
 
@@ -174,7 +189,9 @@ export function AppSettingsPage({ settings, onChange }: Props) {
                       ? mark(checks?.worldDir)
                       : k === "consoleLog"
                         ? mark(checks?.consoleLog)
-                        : null}
+                        : k === "clientWorkshopDir"
+                          ? mark(checks?.clientWorkshopDir)
+                          : null}
               </li>
             ))}
           </ul>

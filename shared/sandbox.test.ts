@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applySandboxUpdates, parseSandboxVars } from "../electron/sandbox";
+import { alignSandboxModSections } from "../shared/sandboxAlign";
 
 const SAMPLE = `SandboxVars = {
     VERSION = 6,
@@ -48,5 +49,26 @@ describe("sandbox nested parse", () => {
     expect(next).toMatch(/PermanentCasings = false,/);
     expect(next).toContain("CustomIcons = true");
     expect(next).toContain("rSemiTruck = {");
+  });
+});
+
+describe("alignSandboxModSections", () => {
+  it("orders lua tables to match INI Mods= and reports leftovers", () => {
+    const sections = [
+      { id: "MarzGuns" },
+      { id: "HB" },
+      { id: "MSW" },
+      { id: "OrphanTable" },
+      { id: "GWG" }
+    ];
+    const { aligned, orphans, missing } = alignSandboxModSections(sections, [
+      "SWMG",
+      "HBVCEFb42",
+      "MarzGuns",
+      "CleanUI"
+    ]);
+    expect(aligned.map((s) => s.id)).toEqual(["HB", "GWG", "MarzGuns", "MSW"]);
+    expect(orphans.map((s) => s.id)).toEqual(["OrphanTable"]);
+    expect(missing).toEqual(["CleanUI"]);
   });
 });

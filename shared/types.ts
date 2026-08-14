@@ -5,6 +5,29 @@ export type AppSettings = {
   serverName: string;
   backupDir: string;
   consoleFontSize: number;
+  /** Client game Workshop content folder (`…/workshop/content/108600`). Empty = auto-detect. */
+  clientWorkshopDir: string;
+};
+
+export type ModIdSource = "client" | "server" | "steam" | "none";
+
+export type WorkshopModMapping = {
+  id: string;
+  title: string | null;
+  modIds: string[];
+  source: ModIdSource;
+  error?: string;
+};
+
+export type ClientModPreset = {
+  name: string;
+  mods: string[];
+};
+
+export type ClientModPresetResolved = ClientModPreset & {
+  workshop: string[];
+  items: WorkshopModMapping[];
+  unmatched: string[];
 };
 
 export type IniDocument = {
@@ -47,6 +70,7 @@ export type PathCheck = {
   worldDir: boolean;
   consoleLog: boolean;
   backupDir: boolean;
+  clientWorkshopDir: boolean;
 };
 
 export const PASSWORD_KEYS = new Set(["Password", "RCONPassword"]);
